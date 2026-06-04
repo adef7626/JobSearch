@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroJob - Premium Job Search & Similarity Matching</title>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-icon"><i class="fa-solid fa-compass-drafting"></i></span>
+        <h1>Aero<span>Job</span></h1>
+      </div>
+      <!-- Tab Navigation -->
+      <nav class="app-nav">
+        <button class="nav-tab active" data-tab="finder-tab">
+          <i class="fa-solid fa-magnifying-glass"></i> <span>Job Finder</span>
+        </button>
+        <button class="nav-tab" data-tab="kanban-tab">
+          <i class="fa-solid fa-chart-column"></i> <span>Application Tracker</span>
+        </button>
+      </nav>
+      <div class="header-actions">
+        <button id="settingsBtn" class="btn btn-secondary">
+          <i class="fa-solid fa-cog"></i> <span>Settings</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- TAB 1: JOB FINDER VIEW -->
+    <div id="finderTabContent" class="tab-content app-main">
+      <div class="sidebar-panel">
+        <!-- Resume Upload Card -->
+        <section class="card glass-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-file-invoice"></i> 1. Upload Resume</h3>
+          </div>
+          <div class="card-body">
+            <div id="dropzone" class="dropzone">
+              <input type="file" id="fileInput" accept=".pdf,.txt" style="display: none;">
+              <div class="dropzone-icon">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <p class="dropzone-title">Drag & drop your resume</p>
+              <p class="dropzone-subtitle">Supports PDF and TXT formats (Max 5MB)</p>
+              <button class="btn btn-primary btn-sm" onclick="document.getElementById('fileInput').click()">
+                Browse File
+              </button>
+            </div>
+            
+            <!-- File Status Box -->
+            <div id="fileStatus" class="file-status hidden">
+              <div class="file-info">
+                <span class="file-icon"><i class="fa-solid fa-file-pdf"></i></span>
+                <div class="file-details">
+                  <p id="fileName" class="file-name">my-resume.pdf</p>
+                  <p id="fileSize" class="file-size">1.2 MB</p>
+                </div>
+                <button id="removeFileBtn" class="btn-icon delete-btn" title="Remove File">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+              <div class="parsed-preview">
+                <span class="preview-label">Parsed Resume Preview:</span>
+                <p id="resumePreviewText">No resume content loaded yet.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Search Criteria Card -->
+        <section class="card glass-card">
+          <div class="card-header">
+            <h3><i class="fa-solid fa-magnifying-glass-location"></i> 2. Target Criteria</h3>
+          </div>
+          <div class="card-body">
+            <form id="searchForm">
+              <div class="form-group">
+                <label for="positionsInput">Target Positions / Keywords</label>
+                <div class="input-wrapper">
+                  <span class="input-icon"><i class="fa-solid fa-briefcase"></i></span>
+                  <input type="text" id="positionsInput" placeholder="e.g. React Developer, Process Safety, Engineer (Optional)">
+                </div>
+                <small class="form-hint">Enter job titles or space-separated keywords. Separate multiple search groups with commas.</small>
+              </div>
+
+              <div class="form-group">
+                <label for="companiesInput">Target Companies <span class="optional">(Optional)</span></label>
+                <div class="input-wrapper">
+                  <span class="input-icon"><i class="fa-solid fa-building"></i></span>
+                  <input type="text" id="companiesInput" placeholder="Google, Microsoft, Stripe">
+                </div>
+                <small class="form-hint">Separate multiple companies with commas</small>
+              </div>
+
+              <div class="form-group">
+                <label for="locationsInput">Preferred Locations</label>
+                <div class="input-wrapper">
+                  <span class="input-icon"><i class="fa-solid fa-location-dot"></i></span>
+                  <input type="text" id="locationsInput" placeholder="Bangalore, Remote, Mumbai" required>
+                </div>
+                <small class="form-hint">Separate locations with commas</small>
+              </div>
+
+              <!-- New Search Parameter Filters -->
+              <div class="search-filters-row">
+                <div class="form-group flex-1">
+                  <label for="experienceSelect">Experience</label>
+                  <select id="experienceSelect" class="form-select">
+                    <option value="all">Any Level</option>
+                    <option value="junior">Junior (0-2 yr)</option>
+                    <option value="mid">Mid-Level (2-5 yr)</option>
+                    <option value="senior">Senior (5+ yr)</option>
+                  </select>
+                </div>
+
+                <div class="form-group flex-1">
+                  <label for="workModeSelect">Work Mode</label>
+                  <select id="workModeSelect" class="form-select">
+                    <option value="all">Any Mode</option>
+                    <option value="remote">Remote Only</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="onsite">On-Site</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="jobTypeSelect">Job Schedule</label>
+                <select id="jobTypeSelect" class="form-select">
+                  <option value="all">Any Schedule</option>
+                  <option value="fulltime">Full-Time</option>
+                  <option value="parttime">Part-Time</option>
+                  <option value="contract">Contract/Freelance</option>
+                  <option value="internship">Internship</option>
+                </select>
+              </div>
+
+              <button type="submit" id="searchBtn" class="btn btn-gradient btn-block" disabled>
+                <i class="fa-solid fa-search"></i> <span>Find & Match Jobs</span>
+              </button>
+            </form>
+          </div>
+        </section>
+      </div>
+
+      <div class="content-panel">
+        <!-- Dashboard Summary -->
+        <div id="dashboardStats" class="dashboard-stats hidden">
+          <div class="stat-card glass-card animate-fade-in">
+            <div class="stat-header">
+              <span class="stat-title">Jobs Discovered</span>
+              <span class="stat-icon theme-blue"><i class="fa-solid fa-compass"></i></span>
+            </div>
+            <div id="statJobsFound" class="stat-value">0</div>
+            <div class="stat-desc">across LinkedIn, Naukri, & ATS</div>
+          </div>
+
+          <div class="stat-card glass-card animate-fade-in" style="animation-delay: 0.1s">
+            <div class="stat-header">
+              <span class="stat-title">Average Match</span>
+              <span class="stat-icon theme-purple"><i class="fa-solid fa-bullseye"></i></span>
+            </div>
+            <div id="statAvgMatch" class="stat-value">0%</div>
+            <div class="stat-desc">overall profile similarity</div>
+          </div>
+
+          <div class="stat-card glass-card animate-fade-in" style="animation-delay: 0.2s">
+            <div class="stat-header">
+              <span class="stat-title">High Matches</span>
+              <span class="stat-icon theme-green"><i class="fa-solid fa-square-check"></i></span>
+            </div>
+            <div id="statHighMatches" class="stat-value">0</div>
+            <div class="stat-desc">jobs above 70% similarity</div>
+          </div>
+        </div>
+
+        <!-- Results Display Card -->
+        <section class="card glass-card results-card flex-grow">
+          <div class="card-header results-header-actions">
+            <h3><i class="fa-solid fa-list-check"></i> Matching Job Openings</h3>
+            <div id="resultsFilters" class="filters hidden">
+              <button class="filter-chip active" data-filter="all">All</button>
+              <button class="filter-chip" data-filter="high"><span class="badge badge-high"></span> High (&gt;70%)</button>
+              <button class="filter-chip" data-filter="medium"><span class="badge badge-medium"></span> Medium (40-70%)</button>
+              <button class="filter-chip" data-filter="low"><span class="badge badge-low"></span> Low (&lt;40%)</button>
+              
+              <!-- Export Dropdown / Buttons -->
+              <span class="filter-divider">|</span>
+              <button id="exportCsvBtn" class="btn btn-secondary btn-sm" title="Export current results to CSV">
+                <i class="fa-solid fa-file-csv"></i> CSV
+              </button>
+              <button id="exportJsonBtn" class="btn btn-secondary btn-sm" title="Export current results to JSON">
+                <i class="fa-solid fa-file-code"></i> JSON
+              </button>
+            </div>
+          </div>
+          
+          <div class="card-body results-container">
+            <!-- Loading Indicator with Status Ticker -->
+            <div id="loadingState" class="status-state hidden">
+              <div class="spinner-box">
+                <div class="double-bounce1"></div>
+                <div class="double-bounce2"></div>
+              </div>
+              <p class="status-title">Aggregating Job Postings...</p>
+              <p id="scraperLiveStatus" class="status-desc text-primary font-semibold">🔍 Querying search databases...</p>
+              <p class="status-desc">Scraping LinkedIn Guest API, Naukri index, and company Greenhouse/Lever boards.</p>
+            </div>
+
+            <!-- Initial Empty State -->
+            <div id="emptyState" class="status-state">
+              <div class="empty-icon">
+                <i class="fa-solid fa-briefcase-clock"></i>
+              </div>
+              <p class="status-title">Awaiting Search Inputs</p>
+              <p class="status-desc">Upload your resume in PDF/TXT format and specify your target positions, preferred companies, and locations to start scanning.</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="status-state hidden">
+              <div class="error-icon">
+                <i class="fa-solid fa-circle-exclamation"></i>
+              </div>
+              <p id="errorTitle" class="status-title">An Error Occurred</p>
+              <p id="errorDesc" class="status-desc">Failed to connect to backend search aggregator.</p>
+            </div>
+
+            <!-- Job List Table -->
+            <div id="resultsTableWrapper" class="table-responsive hidden">
+              <table class="jobs-table">
+                <thead>
+                  <tr>
+                    <th>Job Role</th>
+                    <th>Company</th>
+                    <th>Location</th>
+                    <th>Platform</th>
+                    <th class="text-center">Similarity</th>
+                    <th class="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="jobsList">
+                  <!-- Row templates injected dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB 2: APPLICATION TRACKER (KANBAN BOARD) -->
+    <div id="kanbanTabContent" class="tab-content kanban-board-wrapper hidden">
+      <div class="kanban-header-panel">
+        <div class="kanban-intro">
+          <h2><i class="fa-solid fa-columns"></i> Application Tracker</h2>
+          <p>Drag and drop cards to change status. Double-click a card to view detailed notes, contact persons, and interview schedules.</p>
+        </div>
+        <div class="kanban-actions">
+          <button id="addManualCardBtn" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Add Application
+          </button>
+        </div>
+      </div>
+
+      <div class="kanban-board">
+        <!-- 1. Saved -->
+        <div class="kanban-column" data-column="Saved">
+          <div class="kanban-column-header theme-blue">
+            <span>Saved Matches</span>
+            <span class="card-count" id="countSaved">0</span>
+          </div>
+          <div class="kanban-column-cards" id="cardsSaved" ondragover="allowDrop(event)">
+            <!-- Cards populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 2. Applied -->
+        <div class="kanban-column" data-column="Applied">
+          <div class="kanban-column-header theme-purple">
+            <span>Applied</span>
+            <span class="card-count" id="countApplied">0</span>
+          </div>
+          <div class="kanban-column-cards" id="cardsApplied" ondragover="allowDrop(event)">
+            <!-- Cards populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 3. Interviewing -->
+        <div class="kanban-column" data-column="Interviewing">
+          <div class="kanban-column-header theme-yellow">
+            <span>Interviewing</span>
+            <span class="card-count" id="countInterviewing">0</span>
+          </div>
+          <div class="kanban-column-cards" id="cardsInterviewing" ondragover="allowDrop(event)">
+            <!-- Cards populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 4. Offer -->
+        <div class="kanban-column" data-column="Offer">
+          <div class="kanban-column-header theme-green">
+            <span>Offers Received</span>
+            <span class="card-count" id="countOffer">0</span>
+          </div>
+          <div class="kanban-column-cards" id="cardsOffer" ondragover="allowDrop(event)">
+            <!-- Cards populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 5. Rejected -->
+        <div class="kanban-column" data-column="Rejected">
+          <div class="kanban-column-header theme-red">
+            <span>Rejected / Closed</span>
+            <span class="card-count" id="countRejected">0</span>
+          </div>
+          <div class="kanban-column-cards" id="cardsRejected" ondragover="allowDrop(event)">
+            <!-- Cards populated dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Drawer -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal glass-modal width-sm animate-scale-in">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-sliders"></i> Configuration Settings</h3>
+        <button id="closeSettingsBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="geminiKeyInput">Google Gemini API Key</label>
+          <div class="input-wrapper">
+            <span class="input-icon"><i class="fa-solid fa-key"></i></span>
+            <input type="password" id="geminiKeyInput" placeholder="AIZA... (Optional)">
+          </div>
+          <small class="form-hint">
+            Recommended. If supplied, the platform uses AI to perform semantic matching, extract missing skills, and write a fit breakdown. If empty, the local TF-IDF Cosine Overlap matching is used. Key is stored locally in your browser.
+          </small>
+        </div>
+        <div class="form-group" style="display: flex; gap: 12px; margin-top: 16px;">
+          <button id="saveSettingsBtn" class="btn btn-primary flex-1">Save Configuration</button>
+          <button id="deleteKeyBtn" class="btn btn-secondary delete-btn-accent" style="white-space: nowrap;">
+            <i class="fa-solid fa-trash"></i> Delete Key
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Match Details Modal -->
+  <div id="matchModal" class="modal-overlay hidden">
+    <div class="modal glass-modal width-md animate-scale-in">
+      <div class="modal-header">
+        <div>
+          <h3 id="modalJobTitle">Software Engineer</h3>
+          <p id="modalJobCompany">Google</p>
+        </div>
+        <button id="closeMatchBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="match-score-summary">
+          <div class="score-circle-container">
+            <svg class="score-ring" width="120" height="120">
+              <circle class="score-ring-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+              <circle id="scoreRingProgress" class="score-ring-progress" stroke="#8b5cf6" stroke-width="8" stroke-dasharray="314.16" stroke-dashoffset="314.16" stroke-linecap="round" fill="transparent" r="50" cx="60" cy="60"/>
+            </svg>
+            <div id="modalScoreValue" class="score-number">85%</div>
+          </div>
+          <div class="match-text-summary">
+            <h4>Similarity Analysis</h4>
+            <p id="modalFitLevel" class="badge">High Match</p>
+            <p id="modalSummary" class="summary-text">Your profile demonstrates a strong overlap in Javascript, React, and REST API development. Review details below.</p>
+            <div class="match-method-label">Engine: <span id="modalMatchMethod">Gemini AI</span></div>
+          </div>
+        </div>
+
+        <div class="modal-sections-grid">
+          <div class="modal-column">
+            <h4 class="section-title text-success"><i class="fa-solid fa-circle-check"></i> Matching Skills & Keywords</h4>
+            <ul id="modalMatchingSkills" class="skills-list">
+              <li>No matching skills extracted.</li>
+            </ul>
+          </div>
+          <div class="modal-column">
+            <h4 class="section-title text-warning"><i class="fa-solid fa-triangle-exclamation"></i> Missing / Weak Skills</h4>
+            <ul id="modalMissingSkills" class="skills-list">
+              <li>No missing skills identified.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="modal-full-section">
+          <h4 class="section-title"><i class="fa-solid fa-align-left"></i> Scraped Job Description Snippet</h4>
+          <div id="modalJobDescription" class="description-view">
+            No full description available.
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a id="modalJobLink" href="#" target="_blank" class="btn btn-gradient">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Apply on Website
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kanban Card Detail & Notes Editor Modal -->
+  <div id="kanbanCardModal" class="modal-overlay hidden">
+    <div class="modal glass-modal width-md animate-scale-in">
+      <div class="modal-header">
+        <div>
+          <h3 id="cardModalTitle">Software Developer</h3>
+          <p id="cardModalCompany">Company LLC</p>
+        </div>
+        <button id="closeCardModalBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="cardDetailsForm">
+          <input type="hidden" id="cardIdInput">
+          
+          <div class="search-filters-row">
+            <div class="form-group flex-1">
+              <label for="cardTitleInput">Job Title</label>
+              <input type="text" id="cardTitleInput" class="form-select" required>
+            </div>
+            <div class="form-group flex-1">
+              <label for="cardCompanyInput">Company Name</label>
+              <input type="text" id="cardCompanyInput" class="form-select" required>
+            </div>
+          </div>
+
+          <div class="search-filters-row">
+            <div class="form-group flex-1">
+              <label for="cardLocationInput">Location</label>
+              <input type="text" id="cardLocationInput" class="form-select">
+            </div>
+            <div class="form-group flex-1">
+              <label for="cardUrlInput">Job Link (URL)</label>
+              <input type="text" id="cardUrlInput" class="form-select" placeholder="https://...">
+            </div>
+          </div>
+
+          <div class="search-filters-row">
+            <div class="form-group flex-1">
+              <label for="cardColumnSelect">Pipeline Status</label>
+              <select id="cardColumnSelect" class="form-select">
+                <option value="Saved">Saved Match</option>
+                <option value="Applied">Applied</option>
+                <option value="Interviewing">Interviewing</option>
+                <option value="Offer">Offer Received</option>
+                <option value="Rejected">Rejected / Closed</option>
+              </select>
+            </div>
+            <div class="form-group flex-1">
+              <label for="cardSalaryInput">Salary Details</label>
+              <input type="text" id="cardSalaryInput" class="form-select" placeholder="e.g. ₹15 LPA, $120,000">
+            </div>
+          </div>
+
+          <div class="search-filters-row">
+            <div class="form-group flex-1">
+              <label for="cardContactNameInput">Contact Person</label>
+              <input type="text" id="cardContactNameInput" class="form-select" placeholder="Recruiter Name">
+            </div>
+            <div class="form-group flex-1">
+              <label for="cardContactEmailInput">Contact Email/LinkedIn</label>
+              <input type="text" id="cardContactEmailInput" class="form-select" placeholder="recruiter@email.com">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="cardInterviewInput">Interview Date & Time</label>
+            <input type="text" id="cardInterviewInput" class="form-select" placeholder="e.g. June 15, 2:00 PM (IST)">
+          </div>
+
+          <div class="form-group">
+            <label for="cardNotesInput">Application Logs & Personal Notes</label>
+            <textarea id="cardNotesInput" class="form-textarea" placeholder="Write logs here... e.g. Phone call scheduled, followed up on email, tech assessment due, etc."></textarea>
+          </div>
+
+          <div class="form-group flex-row-reverse" style="display: flex; gap: 12px; margin-top: 24px;">
+            <button type="submit" class="btn btn-primary">Save Application</button>
+            <button type="button" id="deleteCardBtn" class="btn btn-secondary delete-btn-accent">
+              <i class="fa-solid fa-trash"></i> Delete
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
