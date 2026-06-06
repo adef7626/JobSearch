@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     applications: [], // Kanban tracker cards
     activeFilter: 'all', // Results match-score filter
     geminiKey: localStorage.getItem('gemini_api_key') || '',
+    backendUrl: localStorage.getItem('backend_server_url') || '',
     activeTab: 'finder-tab' // Active navigation view
   };
 
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const geminiKeyInput = document.getElementById('geminiKeyInput');
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const deleteKeyBtn = document.getElementById('deleteKeyBtn');
+  const backendUrlInput = document.getElementById('backendUrlInput');
 
   // DOM Elements - Job Finder
   const dropzone = document.getElementById('dropzone');
@@ -110,9 +112,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const cardNotesInput = document.getElementById('cardNotesInput');
   const deleteCardBtn = document.getElementById('deleteCardBtn');
 
-  // Load API Key
+  // Helper to build API endpoints with custom backend URL (for hosting on GitHub Pages)
+  function getApiUrl(endpoint) {
+    const backendUrl = state.backendUrl || '';
+    if (backendUrl) {
+      const base = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
+      return `${base}${endpoint}`;
+    }
+    return endpoint;
+  }
+
+  // Load API Key & Backend URL
   if (state.geminiKey) {
     geminiKeyInput.value = state.geminiKey;
+  }
+  if (state.backendUrl) {
+    backendUrlInput.value = state.backendUrl;
   }
 
   // Fetch applications list on launch
@@ -141,15 +156,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Settings Modal Events ---
   settingsBtn.addEventListener('click', () => {
     geminiKeyInput.value = state.geminiKey;
+    backendUrlInput.value = state.backendUrl;
     settingsModal.classList.remove('hidden');
   });
 
   closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
   saveSettingsBtn.addEventListener('click', () => {
     const key = geminiKeyInput.value.trim();
+    const backend = backendUrlInput.value.trim();
     state.geminiKey = key;
+    state.backendUrl = backend;
     if (key) localStorage.setItem('gemini_api_key', key);
     else localStorage.removeItem('gemini_api_key');
+    if (backend) localStorage.setItem('backend_server_url', backend);
+    else localStorage.removeItem('backend_server_url');
     settingsModal.classList.add('hidden');
     showNotification('Configuration Settings saved!');
   });
@@ -223,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('resume', file);
 
     try {
-      const response = await fetch('/api/upload-resume', {
+      const response = await fetch(getApiUrl('/api/upload-resume'), {
         method: 'POST',
         body: formData
       });
@@ -285,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3200);
 
     try {
-      const response = await fetch('/api/search', {
+      const response = await fetch(getApiUrl('/api/search'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -527,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const response = await fetch('/api/applications', {
+      const response = await fetch(getApiUrl('/api/applications'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -558,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Fetch Applications from Server ---
   async function fetchApplications() {
     try {
-      const response = await fetch('/api/applications');
+      const response = await fetch(getApiUrl('/api/applications'));
       if (response.ok) {
         state.applications = await response.json();
       }
@@ -659,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Sync with API
         try {
-          const response = await fetch('/api/applications', {
+          const response = await fetch(getApiUrl('/api/applications'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, column: colKey })
@@ -750,7 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const response = await fetch('/api/applications', {
+      const response = await fetch(getApiUrl('/api/applications'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -783,7 +803,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this application record?')) return;
 
     try {
-      const response = await fetch(`/api/applications/${id}`, {
+      const response = await fetch(getApiUrl(`/api/applications/${id}`), {
         method: 'DELETE'
       });
       

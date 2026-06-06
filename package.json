@@ -1,0 +1,19 @@
+{
+  "name": "job-search-platform",
+  "version": "1.0.0",
+  "description": "Job Search and Matching Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^0.24.0",
+    "cheerio": "^1.0.0-rc.3",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "multer": "^1.4.3",
+    "pdf-parse": "^1.1.1"
+  },
+  "author": "Antigravity",
+  "license": "ISC"
+}

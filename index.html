@@ -352,6 +352,16 @@
             Recommended. If supplied, the platform uses AI to perform semantic matching, extract missing skills, and write a fit breakdown. If empty, the local TF-IDF Cosine Overlap matching is used. Key is stored locally in your browser.
           </small>
         </div>
+        <div class="form-group">
+          <label for="backendUrlInput">Backend Server URL</label>
+          <div class="input-wrapper">
+            <span class="input-icon"><i class="fa-solid fa-server"></i></span>
+            <input type="text" id="backendUrlInput" placeholder="https://your-backend.onrender.com (Optional)">
+          </div>
+          <small class="form-hint">
+            Optional. Specify the deployed backend server URL (e.g. on Render/Railway) if hosted on GitHub Pages. Leave empty if running the server locally.
+          </small>
+        </div>
         <div class="form-group" style="display: flex; gap: 12px; margin-top: 16px;">
           <button id="saveSettingsBtn" class="btn btn-primary flex-1">Save Configuration</button>
           <button id="deleteKeyBtn" class="btn btn-secondary delete-btn-accent" style="white-space: nowrap;">
