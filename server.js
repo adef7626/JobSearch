@@ -322,10 +322,10 @@ async function extractTargetPositionsViaGemini(resumeText, apiKey) {
   return null;
 }
 
-// Scraper: DuckDuckGo HTML Search Workaround (generic query tool)
-async function searchDuckDuckGo(query) {
+// Scraper: Yahoo Search (generic query tool fallback, bypasses DDG CAPTCHA)
+async function searchYahoo(query) {
   try {
-    const url = 'https://html.duckduckgo.com/html/?q=' + encodeURIComponent(query);
+    const url = 'https://search.yahoo.com/search?q=' + encodeURIComponent(query);
     const response = await axios.get(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
@@ -338,35 +338,84 @@ async function searchDuckDuckGo(query) {
     const $ = cheerio.load(response.data);
     const results = [];
 
-    $('.result').each((i, el) => {
-      let titleLink = $(el).find('a.result__a').first();
-      if (!titleLink.length) {
-        titleLink = $(el).find('.result__url').first();
-      }
-      const title = titleLink.text().trim();
-      const href = titleLink.attr('href');
-      const snippet = $(el).find('.result__snippet').text().trim();
+    $('a').each((i, el) => {
+      const href = $(el).attr('href');
+      if (href && href.includes('r.search.yahoo.com')) {
+        const h3El = $(el).find('h3');
+        if (h3El.length) {
+          const title = h3El.text().replace(/\s+/g, ' ').trim();
+          const snippet = $(el).closest('li').find('.compText, .algo-desc').text().trim() || '';
 
-      if (href && (href.startsWith('/l/?') || href.includes('uddg='))) {
-        let actualUrl = href;
-        try {
-          const urlParams = new URLSearchParams(href.split('?')[1]);
-          actualUrl = urlParams.get('uddg') || href;
-        } catch (e) {
-          actualUrl = href;
-        }
+          let actualUrl = href;
+          try {
+            const match = href.match(/RU=([^/&]+)/);
+            if (match) {
+              actualUrl = decodeURIComponent(match[1]);
+            }
+          } catch (e) {
+            actualUrl = href;
+          }
 
-        if (title && actualUrl) {
-          results.push({ title, url: actualUrl, snippet });
+          // Exclude internal Yahoo pages
+          if (actualUrl && !actualUrl.includes('yahoo.com') && !actualUrl.includes('yahoo.co')) {
+            results.push({ title, url: actualUrl, snippet });
+          }
         }
       }
     });
 
     return results;
   } catch (error) {
-    console.error('DuckDuckGo search error:', error.message);
+    console.error('Yahoo search error:', error.message);
     return [];
   }
+}
+
+// Scraper: Bing Search (generic query tool secondary fallback)
+async function searchBing(query) {
+  try {
+    const url = 'https://www.bing.com/search?q=' + encodeURIComponent(query);
+    const response = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36'
+      },
+      timeout: 8000
+    });
+
+    const $ = cheerio.load(response.data);
+    const results = [];
+
+    $('.b_algo h2 a, .b_algo h3 a').each((i, el) => {
+      const title = $(el).text().trim();
+      const href = $(el).attr('href');
+      const snippet = $(el).closest('li').find('p').text().trim() || '';
+
+      if (title && href && !href.includes('microsoft.com') && !href.includes('bing.com')) {
+        results.push({ title, url: href, snippet });
+      }
+    });
+
+    return results;
+  } catch (error) {
+    console.error('Bing search error:', error.message);
+    return [];
+  }
+}
+
+// Unified Search Engine fallback router
+async function searchGeneralEngine(query) {
+  console.log('Querying Yahoo fallback for: ' + query);
+  let results = await searchYahoo(query);
+  if (results.length === 0) {
+    console.log('Yahoo search returned 0 results, running Bing search fallback...');
+    results = await searchBing(query);
+  }
+  return results;
+}
+
+// Keep wrapper name to prevent breaking other files/functions calling searchDuckDuckGo
+async function searchDuckDuckGo(query) {
+  return searchGeneralEngine(query);
 }
 
 // Scraper: LinkedIn Guest Job Search API
