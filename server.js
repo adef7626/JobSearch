@@ -90,64 +90,129 @@ function writeApps(appsArr) {
   }
 }
 
-// Local TF-IDF Cosine Similarity Engine
+// Local Skill & Experience Overlap Similarity Engine
 function calculateCosineSimilarity(text1, text2) {
   if (!text1 || !text2) return 0;
 
-  const tokenize = (text) => {
-    return text
-      .toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
-      .split(/\s+/)
-      .filter(word => word.length > 1);
+  // Helper to extract technical keywords and skills
+  const extractSkills = (text) => {
+    const textLower = text.toLowerCase();
+    
+    // Core dictionary of software and chemical engineering terms
+    const skillDictionary = [
+      // Software
+      'javascript', 'typescript', 'react', 'node', 'express', 'mongodb', 'python', 'java', 'c++', 'c#',
+      'html', 'css', 'sql', 'nosql', 'aws', 'docker', 'kubernetes', 'git', 'api', 'rest', 'graphql',
+      'angular', 'vue', 'redux', 'django', 'flask', 'postgres', 'mysql', 'ci/cd', 'devops', 'cloud',
+      'agile', 'scrum', 'backend', 'frontend', 'fullstack', 'web', 'database', 'software',
+      // Chemical
+      'hazop', 'qra', 'psm', 'safety', 'process', 'petrochemical', 'agrochemical', 'refinery',
+      'piping', 'simulation', 'hysys', 'aspen', 'p&id', 'instrumentation', 'thermodynamics',
+      'reactor', 'catalyst', 'distillation', 'equipment', 'compliance', 'osha', 'risk',
+      'assessment', 'hazard', 'ehs', 'chemical', 'fluid', 'valves', 'pumps', 'columns',
+      'kinetics', 'mass transfer', 'heat transfer', 'materials', 'production', 'commissioning'
+    ];
+
+    const extracted = new Set();
+
+    // Dictionary lookup
+    skillDictionary.forEach(skill => {
+      const regex = new RegExp('\\b' + skill.replace('+', '\\+') + '\\b', 'i');
+      if (regex.test(textLower)) {
+        extracted.add(skill);
+      }
+    });
+
+    // Extract acronyms (words with 2-6 uppercase letters in original text, like PSM, HAZOP, API, AWS)
+    const acronymMatches = text.match(/\b[A-Z]{2,6}\b/g);
+    if (acronymMatches) {
+      acronymMatches.forEach(ac => extracted.add(ac.toLowerCase()));
+    }
+
+    return extracted;
   };
 
-  const stopwords = new Set([
-    'the', 'a', 'and', 'or', 'of', 'to', 'in', 'is', 'for', 'on', 'with', 'at', 'by', 'from',
-    'an', 'this', 'that', 'these', 'those', 'it', 'its', 'they', 'them', 'their', 'we', 'us',
-    'our', 'you', 'your', 'i', 'me', 'my', 'he', 'him', 'his', 'she', 'her', 'has', 'have',
-    'had', 'do', 'does', 'did', 'be', 'been', 'being', 'was', 'were', 'are', 'am', 'but',
-    'as', 'if', 'then', 'else', 'than', 'so', 'can', 'will', 'should', 'would', 'could'
-  ]);
+  // Extract skills from both texts
+  const skills1 = extractSkills(text1);
+  const skills2 = extractSkills(text2);
 
-  const tokens1 = tokenize(text1).filter(w => !stopwords.has(w));
-  const tokens2 = tokenize(text2).filter(w => !stopwords.has(w));
+  // Calculate Jaccard Overlap of skills
+  const intersection = new Set([...skills1].filter(x => skills2.has(x)));
+  const union = new Set([...skills1, ...skills2]);
 
-  if (tokens1.length === 0 || tokens2.length === 0) return 0;
+  let skillScore = 0;
+  if (union.size > 0) {
+    const jaccard = intersection.size / union.size;
+    // Scale Jaccard similarity: sharing 30% of critical terms is already a very solid match.
+    // Map Jaccard ratio [0.0 - 0.45] to [0 - 100]% range
+    skillScore = Math.min(100, Math.round(jaccard * 220));
+  }
 
-  const tf1 = {};
-  const tf2 = {};
-  const vocab = new Set();
+  // Parse and match experience
+  const parseExperience = (text) => {
+    const textLower = text.toLowerCase();
+    
+    // Try range like "10-15 Yrs" or "5 to 10 years"
+    const rangeRegex = /(\d+)\s*(?:-|to)\s*(\d+)\s*(?:yrs|years|yr|year|exp)/i;
+    const matchRange = text.match(rangeRegex);
+    if (matchRange) {
+      return { min: parseInt(matchRange[1], 10), max: parseInt(matchRange[2], 10) };
+    }
 
-  tokens1.forEach(word => {
-    tf1[word] = (tf1[word] || 0) + 1;
-    vocab.add(word);
-  });
+    // Try plus like "5+ Yrs"
+    const plusRegex = /(\d+)\s*\+\s*(?:yrs|years|yr|year|exp)/i;
+    const matchPlus = text.match(plusRegex);
+    if (matchPlus) {
+      return { min: parseInt(matchPlus[1], 10), max: 99 };
+    }
 
-  tokens2.forEach(word => {
-    tf2[word] = (tf2[word] || 0) + 1;
-    vocab.add(word);
-  });
+    // Try single like "5 years"
+    const singleRegex = /(\d+)\s*(?:yrs|years|yr|year|exp)/i;
+    const matchSingle = text.match(singleRegex);
+    if (matchSingle) {
+      const yrs = parseInt(matchSingle[1], 10);
+      return { min: yrs, max: yrs };
+    }
 
-  let dotProduct = 0;
-  let magnitude1 = 0;
-  let magnitude2 = 0;
+    // Heuristics for keywords if no numbers found
+    if (textLower.includes('senior') || textLower.includes('lead') || textLower.includes('principal')) {
+      return { min: 8, max: 99 };
+    }
+    if (textLower.includes('junior') || textLower.includes('fresher') || textLower.includes('entry')) {
+      return { min: 0, max: 2 };
+    }
 
-  vocab.forEach(word => {
-    const val1 = tf1[word] || 0;
-    const val2 = tf2[word] || 0;
-    dotProduct += val1 * val2;
-    magnitude1 += val1 * val1;
-    magnitude2 += val2 * val2;
-  });
+    return null;
+  };
 
-  magnitude1 = Math.sqrt(magnitude1);
-  magnitude2 = Math.sqrt(magnitude2);
+  const exp1 = parseExperience(text1); // Candidate experience
+  const exp2 = parseExperience(text2); // Job experience requirement
 
-  if (magnitude1 === 0 || magnitude2 === 0) return 0;
+  let expMultiplier = 1.0;
+  if (exp1 && exp2) {
+    const candidateYrs = exp1.min;
+    if (candidateYrs >= exp2.min && candidateYrs <= exp2.max) {
+      // Perfect match in range! Add a +15% boost to similarity score
+      skillScore = Math.min(100, skillScore + 15);
+    } else if (candidateYrs < exp2.min) {
+      // Under-experienced: deduct score proportional to gap
+      const gap = exp2.min - candidateYrs;
+      expMultiplier = Math.max(0.6, 1.0 - (gap * 0.1));
+    } else if (candidateYrs > exp2.max) {
+      // Over-experienced: slight penalty
+      expMultiplier = 0.9;
+    }
+  }
 
-  const similarity = dotProduct / (magnitude1 * magnitude2);
-  return Math.round(similarity * 100);
+  // Calculate final score
+  const finalScore = Math.round(skillScore * expMultiplier);
+
+  // If there's at least one skill intersection but finalScore is too low, set a reasonable baseline
+  if (intersection.size > 0 && finalScore < 15) {
+    return 15;
+  }
+
+  return Math.min(100, Math.max(0, finalScore));
 }
 
 // Optional Gemini Matcher
@@ -588,7 +653,7 @@ app.post('/api/upload-resume', upload.single('resume'), async (req, res) => {
 
 // 2. Main Aggregated Job Search & Match Route
 app.post('/api/search', async (req, res) => {
-  const { resumeText, positions, companies, locations, geminiKey, experience, workMode, jobType } = req.body;
+  const { resumeText, positions, companies, locations, geminiKey, experience, workMode, jobType, industry } = req.body;
 
   if (!resumeText) {
     return res.status(400).json({ error: 'Resume text is required' });
@@ -627,6 +692,7 @@ app.post('/api/search', async (req, res) => {
     positions: queryPositions,
     companies: queryCompanies,
     locations: queryLocations,
+    industry: industry || 'all',
     experience: experience || 'all',
     workMode: workMode || 'all',
     jobType: jobType || 'all'
@@ -647,8 +713,26 @@ app.post('/api/search', async (req, res) => {
     }
   }
 
+  // Mapped industry keywords to query along with target job titles
+  let targetIndustryKeyword = '';
+  if (industry && industry !== 'all') {
+    const industryMap = {
+      petrochemicals: 'Petrochemicals',
+      agrochemicals: 'Agrochemicals',
+      specialty: 'Specialty Chemicals',
+      pharma: 'Pharma',
+      polymers: 'Polymers',
+      inorganics: 'Inorganic Chemicals',
+      paints: 'Paints',
+      organic: 'Organic Chemicals',
+      engineering: 'Chemical Engineering'
+    };
+    targetIndustryKeyword = industryMap[industry] || '';
+  }
+
   console.log('Starting Job Search Platform with parameters:', {
     positions: queryPositions,
+    industry: industry || 'all',
     companies: queryCompanies,
     locations: queryLocations,
     experience: experience || 'all',
@@ -660,11 +744,14 @@ app.post('/api/search', async (req, res) => {
   const searchPromises = [];
 
   queryPositions.forEach(pos => {
+    // Append industry keyword to target position to narrow search scope to the specific chemical sector
+    const queryPositionWithIndustry = targetIndustryKeyword ? `${pos} ${targetIndustryKeyword}` : pos;
+
     queryCompanies.forEach(comp => {
       queryLocations.forEach(loc => {
         // LinkedIn
         searchPromises.push(
-          searchLinkedIn(pos, comp, loc).then(jobs => {
+          searchLinkedIn(queryPositionWithIndustry, comp, loc).then(jobs => {
             jobs.forEach(j => {
               const key = (j.title + '::' + j.company).toLowerCase();
               if (!allJobsMap.has(key)) allJobsMap.set(key, j);
@@ -674,7 +761,7 @@ app.post('/api/search', async (req, res) => {
 
         // Naukri
         searchPromises.push(
-          searchNaukri(pos, comp, loc).then(jobs => {
+          searchNaukri(queryPositionWithIndustry, comp, loc).then(jobs => {
             jobs.forEach(j => {
               const key = (j.title + '::' + j.company).toLowerCase();
               if (!allJobsMap.has(key)) allJobsMap.set(key, j);
@@ -684,7 +771,7 @@ app.post('/api/search', async (req, res) => {
 
         // Company ATS (Greenhouse/Lever)
         searchPromises.push(
-          searchCompanyATS(pos, comp, loc).then(jobs => {
+          searchCompanyATS(queryPositionWithIndustry, comp, loc).then(jobs => {
             jobs.forEach(j => {
               const key = (j.title + '::' + j.company).toLowerCase();
               if (!allJobsMap.has(key)) allJobsMap.set(key, j);
@@ -700,7 +787,7 @@ app.post('/api/search', async (req, res) => {
     const rawJobs = Array.from(allJobsMap.values());
     console.log('Found ' + rawJobs.length + ' raw unique job listings. Applying query filters...');
 
-    // 1. Apply Experience, WorkMode, and JobType filters post-scraping
+    // Apply Experience, WorkMode, and JobType filters post-scraping
     let filteredRawJobs = rawJobs;
 
     // Work Mode Filter
@@ -727,7 +814,6 @@ app.post('/api/search', async (req, res) => {
 
         // Try parsing numeric experience ranges from text (e.g. "10-15 Yrs", "5+ years", etc.)
         let parsedRange = null;
-        // Range like "10-15 Yrs" or "10 to 15 years"
         const rangeRegex = /(\d+)\s*(?:-|to)\s*(\d+)\s*(?:yrs|years|yr|year|exp)/i;
         const matchRange = matchText.match(rangeRegex);
         if (matchRange) {
@@ -759,29 +845,37 @@ app.post('/api/search', async (req, res) => {
         }
 
         if (parsedRange) {
-          if (experience === 'junior') {
-            return parsedRange.min <= 2;
-          } else if (experience === 'senior') {
-            return parsedRange.min >= 5 || parsedRange.max >= 8;
-          } else if (experience === 'mid') {
-            return parsedRange.min >= 2 && parsedRange.min <= 6;
+          if (experience === 'till_5') {
+            return parsedRange.min <= 5;
+          } else if (experience === '5_to_10') {
+            return (parsedRange.min >= 5 && parsedRange.min <= 10) || 
+                   (parsedRange.max >= 5 && parsedRange.min <= 10);
+          } else if (experience === '10_to_15') {
+            return (parsedRange.min >= 10 && parsedRange.min <= 15) || 
+                   (parsedRange.max >= 10 && parsedRange.min <= 15);
+          } else if (experience === '15_plus') {
+            return parsedRange.max >= 15 || parsedRange.min >= 15;
           }
         }
 
         // Fallback to keyword matching if no numeric pattern was found
-        const seniorKeywords = ['senior', 'lead', 'architect', 'manager', 'principal', 'director', 'head', 'sr.', '5+ years', '10+ years'];
+        const seniorKeywords = ['senior', 'lead', 'architect', 'manager', 'principal', 'director', 'head', 'sr.', '10+ years', '15+ years'];
+        const midKeywords = ['mid', 'experienced', '3+ years', '5+ years', '5-10 years'];
         const juniorKeywords = ['junior', 'entry', 'associate', '0-2 years', '1-2 years', 'intern', 'graduate', 'fresh', 'fresher', 'jr.'];
 
-        if (experience === 'junior') {
-          const hasJunior = juniorKeywords.some(kw => matchText.includes(kw));
-          const hasSenior = seniorKeywords.some(kw => titleLower.includes(kw));
-          return hasJunior || !hasSenior;
-        } else if (experience === 'senior') {
-          return seniorKeywords.some(kw => matchText.includes(kw));
-        } else if (experience === 'mid') {
-          const hasSenior = seniorKeywords.some(kw => titleLower.includes(kw));
-          const hasJunior = juniorKeywords.some(kw => titleLower.includes(kw));
-          return !hasSenior && !hasJunior;
+        if (experience === 'till_5') {
+          const hasJunior = juniorKeywords.some(kw => matchText.includes(kw)) || midKeywords.some(kw => matchText.includes(kw));
+          const hasPrincipal = ['architect', 'manager', 'principal', 'director', 'head', '10+ years', '15+ years'].some(kw => titleLower.includes(kw));
+          return hasJunior || !hasPrincipal;
+        } else if (experience === '5_to_10') {
+          return matchText.includes('5-10') || matchText.includes('5+') || matchText.includes('8+') || 
+                 ['senior', 'sr.', 'lead', '5+ years'].some(kw => matchText.includes(kw));
+        } else if (experience === '10_to_15') {
+          return matchText.includes('10-15') || matchText.includes('10+') || matchText.includes('12+') ||
+                 ['manager', 'lead', 'architect', 'principal', '10+ years'].some(kw => matchText.includes(kw));
+        } else if (experience === '15_plus') {
+          return matchText.includes('15+') || matchText.includes('18+') || matchText.includes('20+') ||
+                 ['director', 'head', 'vice president', 'vp', 'executive', '15+ years'].some(kw => matchText.includes(kw));
         }
         return true;
       });

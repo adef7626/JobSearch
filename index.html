@@ -25,11 +25,14 @@
       </div>
       <!-- Tab Navigation -->
       <nav class="app-nav">
-        <button class="nav-tab active" data-tab="finder-tab">
-          <i class="fa-solid fa-magnifying-glass"></i> <span>Job Finder</span>
+        <button class="nav-tab active" data-tab="criteria-tab">
+          <i class="fa-solid fa-sliders"></i> <span>1. Category & Criteria</span>
         </button>
-        <button class="nav-tab" data-tab="kanban-tab">
-          <i class="fa-solid fa-chart-column"></i> <span>Application Tracker</span>
+        <button class="nav-tab" data-tab="results-tab" id="resultsTabBtn">
+          <i class="fa-solid fa-magnifying-glass"></i> <span>2. Match Results</span>
+        </button>
+        <button class="nav-tab" data-tab="tracker-tab">
+          <i class="fa-solid fa-chart-column"></i> <span>3. Application Tracker</span>
         </button>
       </nav>
       <div class="header-actions">
@@ -39,11 +42,11 @@
       </div>
     </header>
 
-    <!-- TAB 1: JOB FINDER VIEW -->
-    <div id="finderTabContent" class="tab-content app-main">
-      <div class="sidebar-panel">
+    <!-- TAB 1: CATEGORY & CRITERIA VIEW -->
+    <div id="criteriaTabContent" class="tab-content criteria-view-layout">
+      <div class="criteria-grid">
         <!-- Resume Upload Card -->
-        <section class="card glass-card">
+        <section class="card glass-card animate-fade-in">
           <div class="card-header">
             <h3><i class="fa-solid fa-file-invoice"></i> 1. Upload Resume</h3>
           </div>
@@ -72,8 +75,11 @@
                   <i class="fa-solid fa-xmark"></i>
                 </button>
               </div>
-              <div class="parsed-preview">
-                <span class="preview-label">Parsed Resume Preview:</span>
+              <div class="parsed-preview" id="parsedPreviewBox" title="Click to view full parsed text">
+                <span class="preview-label" style="display: flex; justify-content: space-between; align-items: center;">
+                  <span>Parsed Resume Preview:</span>
+                  <span class="view-full-badge"><i class="fa-solid fa-expand"></i> View Full</span>
+                </span>
                 <p id="resumePreviewText">No resume content loaded yet.</p>
               </div>
             </div>
@@ -81,7 +87,7 @@
         </section>
 
         <!-- Search Criteria Card -->
-        <section class="card glass-card">
+        <section class="card glass-card animate-fade-in" style="animation-delay: 0.05s">
           <div class="card-header">
             <h3><i class="fa-solid fa-magnifying-glass-location"></i> 2. Target Criteria</h3>
           </div>
@@ -91,9 +97,25 @@
                 <label for="positionsInput">Target Positions / Keywords</label>
                 <div class="input-wrapper">
                   <span class="input-icon"><i class="fa-solid fa-briefcase"></i></span>
-                  <input type="text" id="positionsInput" placeholder="e.g. React Developer, Process Safety, Engineer (Optional)">
+                  <input type="text" id="positionsInput" placeholder="e.g. Process Safety, Engineer (Optional)">
                 </div>
                 <small class="form-hint">Enter job titles or space-separated keywords. Separate multiple search groups with commas.</small>
+              </div>
+
+              <div class="form-group">
+                <label for="industrySelect">Target Chemical Industry Sector</label>
+                <select id="industrySelect" class="form-select">
+                  <option value="all">All Chemical Industries</option>
+                  <option value="petrochemicals">Petrochemicals</option>
+                  <option value="agrochemicals">Agrochemicals (Fertilizers & Pesticides)</option>
+                  <option value="specialty">Specialty Chemicals</option>
+                  <option value="pharma">Pharmaceuticals & APIs</option>
+                  <option value="polymers">Polymers & Plastics</option>
+                  <option value="inorganics">Industrial Gases & Inorganics</option>
+                  <option value="paints">Paints, Coatings & Adhesives</option>
+                  <option value="organic">Fine & Organic Chemicals</option>
+                  <option value="engineering">General Chemical Engineering</option>
+                </select>
               </div>
 
               <div class="form-group">
@@ -106,23 +128,35 @@
               </div>
 
               <div class="form-group">
-                <label for="locationsInput">Preferred Locations</label>
-                <div class="input-wrapper">
-                  <span class="input-icon"><i class="fa-solid fa-location-dot"></i></span>
-                  <input type="text" id="locationsInput" placeholder="Bangalore, Remote, Mumbai" required>
-                </div>
-                <small class="form-hint">Separate locations with commas</small>
+                <label for="locationsSelect">Preferred Chemical Hub / Location</label>
+                <select id="locationsSelect" class="form-select">
+                  <option value="all">All India / Anywhere</option>
+                  <option value="dahej">Dahej, Gujarat</option>
+                  <option value="ankleshwar">Ankleshwar, Gujarat</option>
+                  <option value="vadodara">Vadodara, Gujarat</option>
+                  <option value="vapi">Vapi, Gujarat</option>
+                  <option value="jamnagar">Jamnagar, Gujarat</option>
+                  <option value="roha">Roha, Maharashtra</option>
+                  <option value="tarapur">Tarapur, Maharashtra</option>
+                  <option value="mumbai">Mumbai/Pune, Maharashtra</option>
+                  <option value="vizag">Visakhapatnam, Andhra Pradesh</option>
+                  <option value="hyderabad">Hyderabad, Telangana</option>
+                  <option value="chennai">Chennai, Tamil Nadu</option>
+                  <option value="mangalore">Mangalore, Karnataka</option>
+                  <option value="remote">Remote / Work From Home</option>
+                </select>
               </div>
 
-              <!-- New Search Parameter Filters -->
+              <!-- Search Parameter Filters -->
               <div class="search-filters-row">
                 <div class="form-group flex-1">
-                  <label for="experienceSelect">Experience</label>
+                  <label for="experienceSelect">Experience Level</label>
                   <select id="experienceSelect" class="form-select">
                     <option value="all">Any Level</option>
-                    <option value="junior">Junior (0-2 yr)</option>
-                    <option value="mid">Mid-Level (2-5 yr)</option>
-                    <option value="senior">Senior (5+ yr)</option>
+                    <option value="till_5">Till 5 years</option>
+                    <option value="5_to_10">5 to 10 years</option>
+                    <option value="10_to_15">10 to 15 years</option>
+                    <option value="15_plus">15+ years</option>
                   </select>
                 </div>
 
@@ -155,114 +189,115 @@
           </div>
         </section>
       </div>
-
-      <div class="content-panel">
-        <!-- Dashboard Summary -->
-        <div id="dashboardStats" class="dashboard-stats hidden">
-          <div class="stat-card glass-card animate-fade-in">
-            <div class="stat-header">
-              <span class="stat-title">Jobs Discovered</span>
-              <span class="stat-icon theme-blue"><i class="fa-solid fa-compass"></i></span>
-            </div>
-            <div id="statJobsFound" class="stat-value">0</div>
-            <div class="stat-desc">across LinkedIn, Naukri, & ATS</div>
-          </div>
-
-          <div class="stat-card glass-card animate-fade-in" style="animation-delay: 0.1s">
-            <div class="stat-header">
-              <span class="stat-title">Average Match</span>
-              <span class="stat-icon theme-purple"><i class="fa-solid fa-bullseye"></i></span>
-            </div>
-            <div id="statAvgMatch" class="stat-value">0%</div>
-            <div class="stat-desc">overall profile similarity</div>
-          </div>
-
-          <div class="stat-card glass-card animate-fade-in" style="animation-delay: 0.2s">
-            <div class="stat-header">
-              <span class="stat-title">High Matches</span>
-              <span class="stat-icon theme-green"><i class="fa-solid fa-square-check"></i></span>
-            </div>
-            <div id="statHighMatches" class="stat-value">0</div>
-            <div class="stat-desc">jobs above 70% similarity</div>
-          </div>
-        </div>
-
-        <!-- Results Display Card -->
-        <section class="card glass-card results-card flex-grow">
-          <div class="card-header results-header-actions">
-            <h3><i class="fa-solid fa-list-check"></i> Matching Job Openings</h3>
-            <div id="resultsFilters" class="filters hidden">
-              <button class="filter-chip active" data-filter="all">All</button>
-              <button class="filter-chip" data-filter="high"><span class="badge badge-high"></span> High (&gt;70%)</button>
-              <button class="filter-chip" data-filter="medium"><span class="badge badge-medium"></span> Medium (40-70%)</button>
-              <button class="filter-chip" data-filter="low"><span class="badge badge-low"></span> Low (&lt;40%)</button>
-              
-              <!-- Export Dropdown / Buttons -->
-              <span class="filter-divider">|</span>
-              <button id="exportCsvBtn" class="btn btn-secondary btn-sm" title="Export current results to CSV">
-                <i class="fa-solid fa-file-csv"></i> CSV
-              </button>
-              <button id="exportJsonBtn" class="btn btn-secondary btn-sm" title="Export current results to JSON">
-                <i class="fa-solid fa-file-code"></i> JSON
-              </button>
-            </div>
-          </div>
-          
-          <div class="card-body results-container">
-            <!-- Loading Indicator with Status Ticker -->
-            <div id="loadingState" class="status-state hidden">
-              <div class="spinner-box">
-                <div class="double-bounce1"></div>
-                <div class="double-bounce2"></div>
-              </div>
-              <p class="status-title">Aggregating Job Postings...</p>
-              <p id="scraperLiveStatus" class="status-desc text-primary font-semibold">🔍 Querying search databases...</p>
-              <p class="status-desc">Scraping LinkedIn Guest API, Naukri index, and company Greenhouse/Lever boards.</p>
-            </div>
-
-            <!-- Initial Empty State -->
-            <div id="emptyState" class="status-state">
-              <div class="empty-icon">
-                <i class="fa-solid fa-briefcase-clock"></i>
-              </div>
-              <p class="status-title">Awaiting Search Inputs</p>
-              <p class="status-desc">Upload your resume in PDF/TXT format and specify your target positions, preferred companies, and locations to start scanning.</p>
-            </div>
-
-            <!-- Error State -->
-            <div id="errorState" class="status-state hidden">
-              <div class="error-icon">
-                <i class="fa-solid fa-circle-exclamation"></i>
-              </div>
-              <p id="errorTitle" class="status-title">An Error Occurred</p>
-              <p id="errorDesc" class="status-desc">Failed to connect to backend search aggregator.</p>
-            </div>
-
-            <!-- Job List Table -->
-            <div id="resultsTableWrapper" class="table-responsive hidden">
-              <table class="jobs-table">
-                <thead>
-                  <tr>
-                    <th>Job Role</th>
-                    <th>Company</th>
-                    <th>Location</th>
-                    <th>Platform</th>
-                    <th class="text-center">Similarity</th>
-                    <th class="text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody id="jobsList">
-                  <!-- Row templates injected dynamically -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-      </div>
     </div>
 
-    <!-- TAB 2: APPLICATION TRACKER (KANBAN BOARD) -->
-    <div id="kanbanTabContent" class="tab-content kanban-board-wrapper hidden">
+    <!-- TAB 2: JOB MATCHES RESULTS VIEW -->
+    <div id="resultsTabContent" class="tab-content content-panel hidden">
+      <!-- Dashboard Summary -->
+      <div id="dashboardStats" class="dashboard-stats hidden">
+        <div class="stat-card glass-card animate-fade-in">
+          <div class="stat-header">
+            <span class="stat-title">Jobs Discovered</span>
+            <span class="stat-icon theme-blue"><i class="fa-solid fa-compass"></i></span>
+          </div>
+          <div id="statJobsFound" class="stat-value">0</div>
+          <div class="stat-desc">across LinkedIn, Naukri, & ATS</div>
+        </div>
+
+        <div class="stat-card glass-card animate-fade-in" style="animation-delay: 0.1s">
+          <div class="stat-header">
+            <span class="stat-title">Average Match</span>
+            <span class="stat-icon theme-purple"><i class="fa-solid fa-bullseye"></i></span>
+          </div>
+          <div id="statAvgMatch" class="stat-value">0%</div>
+          <div class="stat-desc">overall profile similarity</div>
+        </div>
+
+        <div class="stat-card glass-card animate-fade-in" style="animation-delay: 0.2s">
+          <div class="stat-header">
+            <span class="stat-title">High Matches</span>
+            <span class="stat-icon theme-green"><i class="fa-solid fa-square-check"></i></span>
+          </div>
+          <div id="statHighMatches" class="stat-value">0</div>
+          <div class="stat-desc">jobs above 70% similarity</div>
+        </div>
+      </div>
+
+      <!-- Results Display Card -->
+      <section class="card glass-card results-card flex-grow">
+        <div class="card-header results-header-actions">
+          <h3><i class="fa-solid fa-list-check"></i> Matching Job Openings</h3>
+          <div id="resultsFilters" class="filters hidden">
+            <button class="filter-chip active" data-filter="all">All</button>
+            <button class="filter-chip" data-filter="high"><span class="badge badge-high"></span> High (&gt;70%)</button>
+            <button class="filter-chip" data-filter="medium"><span class="badge badge-medium"></span> Medium (40-70%)</button>
+            <button class="filter-chip" data-filter="low"><span class="badge badge-low"></span> Low (&lt;40%)</button>
+            
+            <!-- Export Dropdown / Buttons -->
+            <span class="filter-divider">|</span>
+            <button id="exportCsvBtn" class="btn btn-secondary btn-sm" title="Export current results to CSV">
+              <i class="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <button id="exportJsonBtn" class="btn btn-secondary btn-sm" title="Export current results to JSON">
+              <i class="fa-solid fa-file-code"></i> JSON
+            </button>
+          </div>
+        </div>
+        
+        <div class="card-body results-container">
+          <!-- Loading Indicator with Status Ticker -->
+          <div id="loadingState" class="status-state hidden">
+            <div class="spinner-box">
+              <div class="double-bounce1"></div>
+              <div class="double-bounce2"></div>
+            </div>
+            <p class="status-title">Aggregating Job Postings...</p>
+            <p id="scraperLiveStatus" class="status-desc text-primary font-semibold">🔍 Querying search databases...</p>
+            <p class="status-desc">Scraping LinkedIn Guest API, Naukri index, and company Greenhouse/Lever boards.</p>
+          </div>
+
+          <!-- Initial Empty State -->
+          <div id="emptyState" class="status-state">
+            <div class="empty-icon">
+              <i class="fa-solid fa-briefcase-clock"></i>
+            </div>
+            <p class="status-title">Awaiting Search Inputs</p>
+            <p class="status-desc">Upload your resume in PDF/TXT format and specify your target positions, preferred chemical industry, and locations to start scanning.</p>
+          </div>
+
+          <!-- Error State -->
+          <div id="errorState" class="status-state hidden">
+            <div class="error-icon">
+              <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <p id="errorTitle" class="status-title">An Error Occurred</p>
+            <p id="errorDesc" class="status-desc">Failed to connect to backend search aggregator.</p>
+          </div>
+
+          <!-- Job List Table -->
+          <div id="resultsTableWrapper" class="table-responsive hidden">
+            <table class="jobs-table">
+              <thead>
+                <tr>
+                  <th>Job Role</th>
+                  <th>Company</th>
+                  <th>Location</th>
+                  <th>Platform</th>
+                  <th class="text-center">Similarity</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobsList">
+                <!-- Row templates injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- TAB 3: APPLICATION TRACKER (KANBAN BOARD) -->
+    <div id="trackerTabContent" class="tab-content kanban-board-wrapper hidden">
       <div class="kanban-header-panel">
         <div class="kanban-intro">
           <h2><i class="fa-solid fa-columns"></i> Application Tracker</h2>
@@ -500,6 +535,36 @@
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resume Details Modal -->
+  <div id="resumeModal" class="modal-overlay hidden">
+    <div class="modal glass-modal width-md animate-scale-in">
+      <div class="modal-header">
+        <div>
+          <h3><i class="fa-solid fa-file-invoice"></i> Parsed Resume Content</h3>
+          <p id="resumeModalFilename">resume.pdf</p>
+        </div>
+        <button id="closeResumeBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <div class="resume-meta-info" style="display: flex; gap: 24px; margin-bottom: 16px; font-size: 0.82rem; color: var(--text-secondary);">
+            <div>Word Count: <span id="resumeWordCount" style="color: var(--color-primary); font-weight: 600;">0</span> words</div>
+            <div>Character Count: <span id="resumeCharCount" style="color: var(--color-primary); font-weight: 600;">0</span> characters</div>
+          </div>
+          <div class="resume-full-text-container">
+            <pre id="resumeModalContent" class="resume-text-view">Loading...</pre>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <button id="copyResumeBtn" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-copy"></i> Copy Text
+        </button>
+        <button id="closeResumeModalBtn" class="btn btn-primary btn-sm">Close View</button>
       </div>
     </div>
   </div>

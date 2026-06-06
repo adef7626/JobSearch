@@ -14,8 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements - General / Nav
   const appNav = document.querySelector('.app-nav');
   const navTabs = document.querySelectorAll('.nav-tab');
-  const finderTabContent = document.getElementById('finderTabContent');
-  const kanbanTabContent = document.getElementById('kanbanTabContent');
+  const criteriaTabContent = document.getElementById('criteriaTabContent');
+  const resultsTabContent = document.getElementById('resultsTabContent');
+  const trackerTabContent = document.getElementById('trackerTabContent');
   const settingsBtn = document.getElementById('settingsBtn');
   const settingsModal = document.getElementById('settingsModal');
   const closeSettingsBtn = document.getElementById('closeSettingsBtn');
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const deleteKeyBtn = document.getElementById('deleteKeyBtn');
 
-  // DOM Elements - Job Finder
+  // DOM Elements - Criteria & Setup
   const dropzone = document.getElementById('dropzone');
   const fileInput = document.getElementById('fileInput');
   const fileStatus = document.getElementById('fileStatus');
@@ -31,11 +32,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const fileSizeDisplay = document.getElementById('fileSize');
   const removeFileBtn = document.getElementById('removeFileBtn');
   const resumePreviewText = document.getElementById('resumePreviewText');
+  const parsedPreviewBox = document.getElementById('parsedPreviewBox');
   
   const searchForm = document.getElementById('searchForm');
   const positionsInput = document.getElementById('positionsInput');
+  const industrySelect = document.getElementById('industrySelect');
   const companiesInput = document.getElementById('companiesInput');
-  const locationsInput = document.getElementById('locationsInput');
+  const locationsSelect = document.getElementById('locationsSelect');
+
+  // DOM Elements - Resume Modal
+  const resumeModal = document.getElementById('resumeModal');
+  const closeResumeBtn = document.getElementById('closeResumeBtn');
+  const closeResumeModalBtn = document.getElementById('closeResumeModalBtn');
+  const copyResumeBtn = document.getElementById('copyResumeBtn');
+  const resumeModalFilename = document.getElementById('resumeModalFilename');
+  const resumeWordCount = document.getElementById('resumeWordCount');
+  const resumeCharCount = document.getElementById('resumeCharCount');
+  const resumeModalContent = document.getElementById('resumeModalContent');
   const experienceSelect = document.getElementById('experienceSelect');
   const workModeSelect = document.getElementById('workModeSelect');
   const jobTypeSelect = document.getElementById('jobTypeSelect');
@@ -135,21 +148,31 @@ document.addEventListener('DOMContentLoaded', () => {
   navTabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const tabName = tab.getAttribute('data-tab');
-      state.activeTab = tabName;
-      
-      navTabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      if (tabName === 'finder-tab') {
-        finderTabContent.classList.remove('hidden');
-        kanbanTabContent.classList.add('hidden');
-      } else {
-        finderTabContent.classList.add('hidden');
-        kanbanTabContent.classList.remove('hidden');
-        renderKanbanBoard();
-      }
+      switchTab(tabName);
     });
   });
+
+  function switchTab(tabName) {
+    state.activeTab = tabName;
+    
+    navTabs.forEach(t => {
+      if (t.getAttribute('data-tab') === tabName) t.classList.add('active');
+      else t.classList.remove('active');
+    });
+
+    criteriaTabContent.classList.add('hidden');
+    resultsTabContent.classList.add('hidden');
+    trackerTabContent.classList.add('hidden');
+
+    if (tabName === 'criteria-tab') {
+      criteriaTabContent.classList.remove('hidden');
+    } else if (tabName === 'results-tab') {
+      resultsTabContent.classList.remove('hidden');
+    } else if (tabName === 'tracker-tab') {
+      trackerTabContent.classList.remove('hidden');
+      renderKanbanBoard();
+    }
+  }
 
   // --- Settings Modal Events ---
   settingsBtn.addEventListener('click', () => {
@@ -180,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.target === settingsModal) settingsModal.classList.add('hidden');
     if (e.target === matchModal) matchModal.classList.add('hidden');
     if (e.target === kanbanCardModal) kanbanCardModal.classList.add('hidden');
+    if (e.target === resumeModal) resumeModal.classList.add('hidden');
   });
 
   // --- Resume Drag & Drop ---
@@ -282,13 +306,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const positions = positionsInput.value.split(',').map(s => s.trim()).filter(Boolean);
     const companies = companiesInput.value.split(',').map(s => s.trim()).filter(Boolean);
-    const locations = locationsInput.value.split(',').map(s => s.trim()).filter(Boolean);
     
+    // Get location text from dropdown select
+    const selectedLocationText = locationsSelect.value === 'all' ? '' : locationsSelect.options[locationsSelect.selectedIndex].text;
+    const locations = selectedLocationText ? [selectedLocationText] : [];
+    
+    const industry = industrySelect.value;
     const experience = experienceSelect.value;
     const workMode = workModeSelect.value;
     const jobType = jobTypeSelect.value;
 
     // View Loading & Spin up Status Ticker
+    switchTab('results-tab'); // Automatically switch to Match Results tab
     setViewState('loading');
     let messageIndex = 0;
     scraperLiveStatus.textContent = loadingMessages[0];
@@ -306,6 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
           positions,
           companies,
           locations,
+          industry,
           geminiKey: state.geminiKey,
           experience,
           workMode,
@@ -981,5 +1011,44 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const closeAlert = () => alertOverlay.remove();
     alertOverlay.querySelectorAll('.alert-close').forEach(b => b.addEventListener('click', closeAlert));
+  }
+
+  // --- Resume Details Modal Logic ---
+  if (parsedPreviewBox) {
+    parsedPreviewBox.addEventListener('click', () => {
+      if (!state.resumeText) return;
+      
+      const fileName = fileNameDisplay.textContent || 'Uploaded Resume';
+      resumeModalFilename.textContent = fileName;
+      
+      // Calculate word and character count
+      const text = state.resumeText;
+      const charCount = text.length;
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
+      
+      resumeWordCount.textContent = wordCount.toLocaleString();
+      resumeCharCount.textContent = charCount.toLocaleString();
+      resumeModalContent.textContent = text;
+      
+      resumeModal.classList.remove('hidden');
+    });
+  }
+
+  const closeResumeModal = () => resumeModal.classList.add('hidden');
+  if (closeResumeBtn) closeResumeBtn.addEventListener('click', closeResumeModal);
+  if (closeResumeModalBtn) closeResumeModalBtn.addEventListener('click', closeResumeModal);
+
+  if (copyResumeBtn) {
+    copyResumeBtn.addEventListener('click', () => {
+      if (!state.resumeText) return;
+      navigator.clipboard.writeText(state.resumeText)
+        .then(() => {
+          showNotification('Resume text copied to clipboard!');
+        })
+        .catch(err => {
+          console.error('Copy failed:', err);
+          showNotification('Failed to copy text.');
+        });
+    });
   }
 });
