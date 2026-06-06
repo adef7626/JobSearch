@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     applications: [], // Kanban tracker cards
     activeFilter: 'all', // Results match-score filter
     geminiKey: localStorage.getItem('gemini_api_key') || '',
-    backendUrl: localStorage.getItem('backend_server_url') || '',
     activeTab: 'finder-tab' // Active navigation view
   };
 
@@ -23,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const geminiKeyInput = document.getElementById('geminiKeyInput');
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const deleteKeyBtn = document.getElementById('deleteKeyBtn');
-  const backendUrlInput = document.getElementById('backendUrlInput');
 
   // DOM Elements - Job Finder
   const dropzone = document.getElementById('dropzone');
@@ -112,22 +110,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const cardNotesInput = document.getElementById('cardNotesInput');
   const deleteCardBtn = document.getElementById('deleteCardBtn');
 
-  // Helper to build API endpoints with custom backend URL (for hosting on GitHub Pages)
+  // Clear any old backend URL storage if existing
+  localStorage.removeItem('backend_server_url');
+
+  // Helper to build API endpoints dynamically
   function getApiUrl(endpoint) {
-    const backendUrl = state.backendUrl || '';
-    if (backendUrl) {
-      const base = backendUrl.endsWith('/') ? backendUrl.slice(0, -1) : backendUrl;
-      return `${base}${endpoint}`;
+    const DEPLOYED_BACKEND_URL = 'https://jobsearch-inkz.onrender.com';
+    // If running locally, route to relative localhost path, otherwise route to live Render URL
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return endpoint;
     }
-    return endpoint;
+    return DEPLOYED_BACKEND_URL + endpoint;
   }
 
-  // Load API Key & Backend URL
+  // Load API Key
   if (state.geminiKey) {
     geminiKeyInput.value = state.geminiKey;
-  }
-  if (state.backendUrl) {
-    backendUrlInput.value = state.backendUrl;
   }
 
   // Fetch applications list on launch
@@ -156,20 +154,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Settings Modal Events ---
   settingsBtn.addEventListener('click', () => {
     geminiKeyInput.value = state.geminiKey;
-    backendUrlInput.value = state.backendUrl;
     settingsModal.classList.remove('hidden');
   });
 
   closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
   saveSettingsBtn.addEventListener('click', () => {
     const key = geminiKeyInput.value.trim();
-    const backend = backendUrlInput.value.trim();
     state.geminiKey = key;
-    state.backendUrl = backend;
     if (key) localStorage.setItem('gemini_api_key', key);
     else localStorage.removeItem('gemini_api_key');
-    if (backend) localStorage.setItem('backend_server_url', backend);
-    else localStorage.removeItem('backend_server_url');
     settingsModal.classList.add('hidden');
     showNotification('Configuration Settings saved!');
   });
